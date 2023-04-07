@@ -186,6 +186,21 @@ def position_birth_search(position, age, cur, conn):
 #     the passed year. 
 
 def make_winners_table(data, cur, conn):
+    winners = []
+    for season in data['seasons']:
+        id = season['id']
+        try:
+            winner = season['winner']['name']
+        except:
+            winner = season['winner']
+        winners.append((id, winner))
+    print(winners)
+    cur.execute("CREATE TABLE IF NOT EXISTS Winners (id INTEGER PRIMARY KEY, Team TEXT)")
+    for i in winners:
+        cur.execute("INSERT OR IGNORE INTO Winners (id, Team) VALUES (?,?)", (i[0], i[1]))
+    
+    conn.commit()
+
     pass
 
 def make_seasons_table(data, cur, conn):
@@ -250,6 +265,11 @@ class TestAllMethods(unittest.TestCase):
     def test_make_winners_table(self):
         self.cur2.execute('SELECT * from Winners')
         winners_list = self.cur2.fetchall()
+        self.assertEqual(len(winners_list), 124)
+        self.assertEqual(len(winners_list[0]), 2)
+        self.assertIs(type(winners_list[0][0]), int)
+        self.assertIs(type(winners_list[0][1]), str)
+
 
         pass
 
