@@ -91,6 +91,7 @@ def nationality_search(countries, cur, conn):
         results = cur.fetchall()
         for result in results:
             players.append(result)
+
     return players
 
     pass
@@ -194,7 +195,7 @@ def make_winners_table(data, cur, conn):
         except:
             winner = season['winner']
         winners.append((id, winner))
-    print(winners)
+
     cur.execute("CREATE TABLE IF NOT EXISTS Winners (id INTEGER PRIMARY KEY, Team TEXT)")
     for i in winners:
         cur.execute("INSERT OR IGNORE INTO Winners (id, Team) VALUES (?,?)", (i[0], i[1]))
@@ -203,7 +204,43 @@ def make_winners_table(data, cur, conn):
 
     pass
 
+#     The second function takes the same 3 arguments: JSON data, 
+#     the database cursor, and the database connection object. 
+#     It iterates through the JSON data to get info 
+#     about previous Premier League seasons (don't include the current one)
+#     and loads all of the seasons into a database table 
+#     called ‘Seasons' with the following columns:
+#         id (datatype: int; Primary key) - note this comes from the JSON
+#         winner_id (datatype: text)
+#         end_year (datatype: int)
+#     NOTE: Skip seasons with no winner!
+
+#     To find the winner_id for each season, you will have to 
+#     look up the winner's name in the Winners table
+#     see make_winners_table above for details
+
 def make_seasons_table(data, cur, conn):
+    cur.execute("CREATE TABLE IF NOT EXISTS Seasons (id INTEGER PRIMARY KEY, winner_id TEXT, end_year INTEGER)")
+
+    seasons = []
+    for season in data['seasons']:
+        if season['winner'] == None:
+            continue
+        
+        team_name = season['winner']['name']
+        cur.execute('SELECT id FROM Winners WHERE Team=?', (team_name,))
+        winner_id = cur.fetchone()[0]
+
+        id = season['id']
+        end_year = season['endDate'][:4]
+
+        seasons.append((id, winner_id, end_year))
+    
+    for i in seasons:
+        cur.execute("INSERT OR IGNORE INTO Seasons (id, winner_id, end_year) VALUES (?,?,?)", (i[0], i[1], i[2]))
+    
+    conn.commit()
+
     pass
 
 def winners_since_search(year, cur, conn):
@@ -276,6 +313,11 @@ class TestAllMethods(unittest.TestCase):
     def test_make_seasons_table(self):
         self.cur2.execute('SELECT * from Seasons')
         seasons_list = self.cur2.fetchall()
+        self.assertEqual(len(seasons_list), 28)
+        self.assertEqual(len(seasons_list[0]), 3)
+        self.assertIs(type(seasons_list[0][0]), int)
+        self.assertIs(type(seasons_list[0][1]), str)
+        self.assertIs(type(seasons_list[0][2]), int)
 
         pass
 
