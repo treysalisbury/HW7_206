@@ -1,7 +1,6 @@
-
-# Your name:
-# Your student id:
-# Your email:
+# Your name: Trey Salisbury
+# Your student id: 42751347
+# Your email: treys@umich.edu
 # List who you have worked with on this project:
 
 import unittest
@@ -53,6 +52,25 @@ def make_positions_table(data, cur, conn):
 #     created for you -- see make_positions_table above for details.
 
 def make_players_table(data, cur, conn):
+    cur.execute("CREATE TABLE IF NOT EXISTS Players (id INTEGER PRIMARY KEY, name TEXT UNIQUE, position_id INTEGER, birthyear INTEGER, nationality TEXT)")
+
+    players = []
+    for player in data['squad']:
+        position = player['position']
+        cur.execute("SELECT id FROM Positions WHERE position=?", (position,))
+        position_id = cur.fetchone()[0]
+
+        player_id = player['id']
+        name = player['name']
+        birthyear = player['dateOfBirth']
+        birthyear = birthyear[:4]
+        nationality = player['nationality']
+    
+        cur.execute("SELECT id FROM Players WHERE id=?", (player_id,))
+        if cur.fetchone() is None:
+            cur.execute("INSERT INTO Players (id, name, position_id, birthyear, nationality) VALUES (?, ?, ?, ?, ?)", (player_id, name, position_id, birthyear, nationality))
+    conn.commit()
+
     pass
 
 ## [TASK 2]: 10 points
@@ -64,6 +82,7 @@ def make_players_table(data, cur, conn):
     # It selects all the players from any of the countries in the list
     # and returns a list of tuples. Each tuple contains:
         # the player's name, their position_id, and their nationality.
+
 
 def nationality_search(countries, cur, conn):
     pass
@@ -105,7 +124,7 @@ def birthyear_nationality_search(age, country, cur, conn):
     # HINT: You'll have to use JOIN for this task.
 
 def position_birth_search(position, age, cur, conn):
-       pass
+    pass
 
 
 # [EXTRA CREDIT]
