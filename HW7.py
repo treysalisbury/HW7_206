@@ -204,21 +204,6 @@ def make_winners_table(data, cur, conn):
 
     pass
 
-#     The second function takes the same 3 arguments: JSON data, 
-#     the database cursor, and the database connection object. 
-#     It iterates through the JSON data to get info 
-#     about previous Premier League seasons (don't include the current one)
-#     and loads all of the seasons into a database table 
-#     called ‘Seasons' with the following columns:
-#         id (datatype: int; Primary key) - note this comes from the JSON
-#         winner_id (datatype: text)
-#         end_year (datatype: int)
-#     NOTE: Skip seasons with no winner!
-
-#     To find the winner_id for each season, you will have to 
-#     look up the winner's name in the Winners table
-#     see make_winners_table above for details
-
 def make_seasons_table(data, cur, conn):
     cur.execute("CREATE TABLE IF NOT EXISTS Seasons (id INTEGER PRIMARY KEY, winner_id TEXT, end_year INTEGER)")
 
@@ -243,7 +228,23 @@ def make_seasons_table(data, cur, conn):
 
     pass
 
+
 def winners_since_search(year, cur, conn):
+    cur.execute("SELECT Winners.Team FROM Winners JOIN Seasons ON Winners.id = Seasons.winner_id WHERE Seasons.end_year >= ?", (year,))
+    winners = cur.fetchall()
+
+    team_counts = {}
+    for winner in winners:
+        team_name = winner[0]
+        if team_name in team_counts:
+            team_counts[team_name] += 1
+        else:
+            team_counts[team_name] = 1
+
+
+    
+    return team_counts
+
     pass
 
 
@@ -322,7 +323,15 @@ class TestAllMethods(unittest.TestCase):
         pass
 
     def test_winners_since_search(self):
+        b = sorted(winners_since_search(2000, self.cur2, self.conn2))
+        print(b)
+        self.assertEqual(len(b), 6)
+        self.assertEqual(type(b[0]), str)
 
+        c = winners_since_search(2010, self.cur2, self.conn2)
+        self.assertIs(type(c), dict)      
+        self.assertEqual(len(c), 5)
+        self.assertEqual(c["Manchester City FC"], 5)
         pass
 
 
